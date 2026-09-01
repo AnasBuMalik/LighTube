@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مشغل يوتيوب خفيف</title>
+</head>
+<body style="margin:0;font-family:system-ui;background:#000;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;">
+
+    <input type="text" id="urlInput" placeholder="ضع رابط يوتيوب هنا"
+           style="width:80%;max-width:500px;padding:10px;font-size:16px;margin-bottom:10px;background:#111;color:#fff;border:1px solid #333;border-radius:4px;outline:none;">
+
+    <button id="playBtn"
+            style="padding:10px 30px;font-size:16px;background:#c00;color:#fff;border:none;border-radius:4px;cursor:pointer;">
+        تشغيل
+    </button>
+
+    <div id="playerContainer" style="width:100%;max-width:800px;margin-top:15px;"></div>
+
+    <script>
+        function extractVideoId(url) {
+            var patterns = [
+                /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/|youtube\.com\/embed\/|youtube\.com\/live\/|youtube\.com\/v\/)([a-zA-Z0-9_-]{11})/,
+                /youtube\.com\/watch\?.*[?&]v=([a-zA-Z0-9_-]{11})/
+            ];
+            for (var i = 0; i < patterns.length; i++) {
+                var m = url.match(patterns[i]);
+                if (m) return m[1];
+            }
+            return null;
+        }
+
+        function playVideo() {
+            var input = document.getElementById('urlInput');
+            var url = input.value.trim();
+            if (!url) return;
+
+            var videoId = extractVideoId(url);
+            if (!videoId) { alert('رابط غير صالح'); return; }
+
+            var container = document.getElementById('playerContainer');
+            container.innerHTML = '';
+
+            var iframe = document.createElement('iframe');
+            iframe.width = '100%';
+            iframe.height = '400';
+            // الرابط الأساسي فقط مع autoplay لتجنب أخطاء الإعدادات
+            iframe.src = 'https://www.youtube.com/embed/' + videoId + '?autoplay=1';
+            iframe.title = 'YouTube video player';
+            iframe.setAttribute('frameborder', '0');
+            iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
+            iframe.setAttribute('allowfullscreen', '');
+            iframe.setAttribute('loading', 'lazy');
+            iframe.setAttribute('referrerpolicy', 'no-referrer');
+
+            container.appendChild(iframe);
+
+            input.focus();
+            input.select();
+        }
+
+        document.getElementById('playBtn').addEventListener('click', playVideo);
+        document.getElementById('urlInput').addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') playVideo();
+        });
+
+        document.getElementById('urlInput').focus();
+    </script>
+</body>
+</html>
