@@ -14,6 +14,6 @@ Mainstream web players and standard embeds often load unnecessary scripts, side 
 
 ## Usage
 
-1. Open `index.html` in any web browser.
+1. Go to https://anasbumalik.github.io/LighTube/ .
 2. Paste a YouTube video URL into the input field.
 3. Press `Enter` or click `PLAY`.
