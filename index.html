@@ -4,67 +4,84 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>مشغل يوتيوب خفيف</title>
+    <style>
+        /* الحد الأدنى من التنسيقات لضمان الأداء */
+        body { margin:0; font-family:system-ui, sans-serif; background:#000; color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; }
+        input { width:80%; max-width:500px; padding:10px; font-size:16px; margin-bottom:8px; background:#111; color:#fff; border:1px solid #333; border-radius:4px; outline:none; }
+        button { padding:10px 25px; font-size:16px; background:#c00; color:#fff; border:none; border-radius:4px; cursor:pointer; margin-bottom:10px; }
+        #player { width:100%; max-width:800px; }
+        iframe { width:100%; height:400px; border:none; }
+    </style>
 </head>
-<body style="margin:0;font-family:system-ui;background:#000;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;">
+<body>
 
-    <input type="text" id="urlInput" placeholder="ضع رابط يوتيوب هنا"
-           style="width:80%;max-width:500px;padding:10px;font-size:16px;margin-bottom:10px;background:#111;color:#fff;border:1px solid #333;border-radius:4px;outline:none;">
-
-    <button id="playBtn"
-            style="padding:10px 30px;font-size:16px;background:#c00;color:#fff;border:none;border-radius:4px;cursor:pointer;">
-        تشغيل
-    </button>
-
-    <div id="playerContainer" style="width:100%;max-width:800px;margin-top:15px;"></div>
+    <input type="text" id="urlInput" placeholder="الصق رابط يوتيوب هنا واضغط Enter" autofocus>
+    <button id="playBtn">تشغيل</button>
+    <div id="player"></div>
 
     <script>
-        function extractVideoId(url) {
-            var patterns = [
-                /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/|youtube\.com\/embed\/|youtube\.com\/live\/|youtube\.com\/v\/)([a-zA-Z0-9_-]{11})/,
-                /youtube\.com\/watch\?.*[?&]v=([a-zA-Z0-9_-]{11})/
-            ];
-            for (var i = 0; i < patterns.length; i++) {
-                var m = url.match(patterns[i]);
-                if (m) return m[1];
+        (function() {
+            const input = document.getElementById('urlInput');
+            const playerDiv = document.getElementById('player');
+            const playBtn = document.getElementById('playBtn');
+
+            // استخراج معرف الفيديو من أي صيغة رابط يوتيوب
+            function extractVideoId(url) {
+                const patterns = [
+                    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/|youtube\.com\/embed\/|youtube\.com\/live\/|youtube\.com\/v\/)([a-zA-Z0-9_-]{11})/,
+                    /youtube\.com\/watch\?.*[?&]v=([a-zA-Z0-9_-]{11})/
+                ];
+                for (const pattern of patterns) {
+                    const match = url.match(pattern);
+                    if (match) return match[1];
+                }
+                return null;
             }
-            return null;
-        }
 
-        function playVideo() {
-            var input = document.getElementById('urlInput');
-            var url = input.value.trim();
-            if (!url) return;
+            function playVideo() {
+                const url = input.value.trim();
+                if (!url) return;
 
-            var videoId = extractVideoId(url);
-            if (!videoId) { alert('رابط غير صالح'); return; }
+                const videoId = extractVideoId(url);
+                if (!videoId) {
+                    alert('رابط غير صالح. تأكد من أن الرابط صحيح.');
+                    return;
+                }
 
-            var container = document.getElementById('playerContainer');
-            container.innerHTML = '';
+                // مسح المشغل السابق لتحرير الذاكرة
+                playerDiv.innerHTML = '';
 
-            var iframe = document.createElement('iframe');
-            iframe.width = '100%';
-            iframe.height = '400';
-            // الرابط الأساسي فقط مع autoplay لتجنب أخطاء الإعدادات
-            iframe.src = 'https://www.youtube.com/embed/' + videoId + '?autoplay=1';
-            iframe.title = 'YouTube video player';
-            iframe.setAttribute('frameborder', '0');
-            iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
-            iframe.setAttribute('allowfullscreen', '');
-            iframe.setAttribute('loading', 'lazy');
-            iframe.setAttribute('referrerpolicy', 'no-referrer');
+                const iframe = document.createElement('iframe');
+                // أهم إضافة: mute=1 حتى يتم التشغيل التلقائي بدون صوت، ويتمكن المستخدم من رفع الصوت لاحقًا
+                // كما نضيف origin لتفادي أخطاء التضمين، وplaysinline ليعمل على الجوال بسلاسة
+                iframe.src = 'https://www.youtube-nocookie.com/embed/' + videoId +
+                             '?autoplay=1&mute=1&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3&origin=' +
+                             encodeURIComponent(window.location.origin);
 
-            container.appendChild(iframe);
+                iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
+                iframe.setAttribute('allowfullscreen', '');
+                iframe.setAttribute('loading', 'eager'); // التحميل الفوري لتجنب تأخير
+                iframe.title = 'YouTube video player';
+                iframe.style.width = '100%';
+                iframe.style.height = '400px';
+                iframe.style.border = 'none';
 
+                playerDiv.appendChild(iframe);
+
+                // إعادة التركيز للحقل
+                input.focus();
+                input.select();
+            }
+
+            // ربط الأحداث
+            playBtn.addEventListener('click', playVideo);
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') playVideo();
+            });
+
+            // تركيز أولي
             input.focus();
-            input.select();
-        }
-
-        document.getElementById('playBtn').addEventListener('click', playVideo);
-        document.getElementById('urlInput').addEventListener('keydown', function (e) {
-            if (e.key === 'Enter') playVideo();
-        });
-
-        document.getElementById('urlInput').focus();
+        })();
     </script>
 </body>
 </html>
